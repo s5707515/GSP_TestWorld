@@ -1,33 +1,53 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
+using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 public class WeaponBase : MonoBehaviour
 {
+
+    // Assets
     public Camera playerCamera;
     public GameObject bulletPrefab;
     public Transform firePoint;
+
+    // Bullet Attributes
     public float bulletVelocity, bulletSpread, fireRate;
     private float lifeTime = 3;
+
+    // Conditions
     private bool isShooting, readyToShoot, allowReset = true;
     private int currentBurstBullet; 
     public int bulletsPerBurst = 3;
-    
+
+    // Reloading
+    public float reloadTime;
+    public int magazineSize, bulletsLeft;
+    public bool isReloading;
+    public AudioSource ReloadAudio;
+
+    // UI
+    public TextMeshProUGUI QTEPopUp;
+
+    // States
     public enum ShootingMode
     {
         Auto,
         Single,
         Burst
-    }
-
+    }  
     public ShootingMode currentMode;
 
+    // Constructors
     private void Awake()
     {
         readyToShoot = true;
         currentBurstBullet = bulletsPerBurst;
+        bulletsLeft = magazineSize;
     }
 
     private void ResetShot()
@@ -53,10 +73,33 @@ public class WeaponBase : MonoBehaviour
             currentBurstBullet = bulletsPerBurst;
             Fire();
         }
+
+        if (Input.GetKeyDown(KeyCode.R) && bulletsLeft < magazineSize && !isReloading)
+        {
+            if (!SkillCheck.Instance.isActive)
+                SkillCheck.Instance.StartQTE(this);
+        }
+
+        if (bulletsLeft < 1)
+        {
+            readyToShoot = false;
+        }
+
+        if (bulletsLeft <= 0 && !isReloading && isShooting && !readyToShoot)
+        {
+            if (!SkillCheck.Instance.isActive)
+                SkillCheck.Instance.StartQTE(this);
+        }
+
+        if (AmmoManager.Instance.ammoCount != null)
+        {
+            AmmoManager.Instance.ammoCount.text = $"{bulletsLeft/bulletsPerBurst}/{magazineSize/bulletsPerBurst}";
+        }
     }
 
-    private void Fire()
+    public void Fire()
     {
+        bulletsLeft--;
 
         readyToShoot = false;
 
@@ -81,6 +124,22 @@ public class WeaponBase : MonoBehaviour
             currentBurstBullet--;
             Invoke("Fire", fireRate);
         }
+    }
+
+    public void Reload()
+    {
+
+        // Insert QTE
+        isReloading = true;
+        Invoke("ReloadCompleted", reloadTime);
+    }
+
+
+    private void ReloadCompleted()
+    {
+        isReloading = false;
+        bulletsLeft = magazineSize;
+        readyToShoot = true;
     }
 
     Vector3 CalculateDirectionAndSpread()
