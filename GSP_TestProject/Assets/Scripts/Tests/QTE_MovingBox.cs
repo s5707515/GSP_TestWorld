@@ -73,9 +73,7 @@ public class QTE_MovingBox : MonoBehaviour
 
         float xPos = Mathf.Lerp(corners[0].x, corners[3].x, t);
 
-        float yPos = (corners[0].y + corners[1].y) / 2f;
-
-        goalRect.position = new Vector3(xPos, yPos, goalRect.position.z);
+        goalRect.position = new Vector3(xPos, goalRect.position.y, goalRect.position.z);
     }
 
     IEnumerator ResetQTE()
