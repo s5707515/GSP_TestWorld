@@ -2,91 +2,104 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UI;
 
 public class QTE_MovingBox : MonoBehaviour
 {
-    [SerializeField] private float timeBetweenQTE = 1.0f;
     [SerializeField] private float moveSpeed = 2.0f;
 
     [SerializeField] private Slider slider;
 
     [SerializeField] private RectTransform goalRect;
 
-    private Transform startPos;
-    private Transform endPos;
-
     private float time = 0;
 
-    bool goalFound = false;
+    bool QTEActive = false;
 
+    bool goalFound = true;
+
+    [SerializeField] float[] widths = { 400.0f, 300.0f, 250.0f, 200.0f };
+
+    private int widthPointer = 0;
    
-
-    private void Start()
-    {
-        goalFound = false;
-
-        SetNewGoalPosition();
-
-        StartCoroutine(LerpSlider());
-    }
-    private void OnDisable()
-    {
-        StopCoroutine(LerpSlider());
-    }
-   
-
 
     // Update is called once per frame
     void Update()
     {
-       if(Input.GetKeyDown(KeyCode.Space))
+        if(!QTEActive)
         {
-            if (ISOverlappingUI(goalRect, slider.handleRect))
+            if (Input.GetKeyDown(KeyCode.Q))
             {
-                Debug.Log("YOU HIT");
-
-                goalFound = true;
-                //gameObject.SetActive(false);
-
-                StartCoroutine(ResetQTE());
-
+                //Display the QTE
+                StartCoroutine(DoQTE());
             }
-            else
-            {
-                Debug.Log("YOU MISSED");
-            }
-
         }
+        else
+        {
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                if (ISOverlappingUI(goalRect, slider.handleRect))
+                {
+                    Debug.Log("YOU HIT");
 
+                    goalFound = true;
+                }
+                else
+                {
+                    Debug.Log("YOU MISSED");
+                }
+            }
+        }
 
     }
 
-    void SetNewGoalPosition()
+   
+
+    void SetNewGoalPosition() //Move the goal somewhere along the slider and set width
     {
         RectTransform sliderRect = slider.GetComponent<RectTransform>();
 
-        Vector3[] corners = new Vector3[4];
-        sliderRect.GetWorldCorners(corners);
-
+        goalRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, widths[widthPointer]);
+       
         float t = Random.Range(0.1f, 0.9f);
 
-        float xPos = Mathf.Lerp(corners[0].x, corners[3].x, t);
+        float width = sliderRect.rect.width;
 
-        goalRect.position = new Vector3(xPos, goalRect.position.y, goalRect.position.z);
+        float xPos = Mathf.Lerp(-width / 2f, width / 2f, t);
+
+        goalRect.anchoredPosition = new Vector2(xPos, goalRect.anchoredPosition.y);
     }
 
-    IEnumerator ResetQTE()
+    IEnumerator DoQTE()
     {
-        yield return new WaitForSeconds(timeBetweenQTE);
-        goalFound = false;
+        QTEActive = true;
+        slider.gameObject.SetActive(true);
 
-        SetNewGoalPosition();
+        time = 0f;
+        widthPointer = 0;
 
-        StartCoroutine(LerpSlider());
+        for (int phases = 0; phases < widths.Length; phases++)
+        {
+            goalFound = false;
+
+            widthPointer = phases;
+
+            SetNewGoalPosition();
+
+            yield return StartCoroutine(LerpSlider()); //Wait for goal to be found
+
+        }
+
+        //Hide QTE event
+
+        QTEActive = false;
+        slider.gameObject.SetActive(false);
+        
     }
     IEnumerator LerpSlider()
     {
+       
 
         while (!goalFound)
         {
@@ -96,7 +109,7 @@ public class QTE_MovingBox : MonoBehaviour
 
             slider.value = Mathf.Lerp(0, 1, t);
 
-            yield return new WaitForEndOfFrame();
+            yield return null;
         }
         
     }
