@@ -1,11 +1,11 @@
+using NUnit.Framework.Constraints;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using TMPro;
-using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Timeline;
+using Random = UnityEngine.Random;
 
 public class WeaponBase : MonoBehaviour
 {
@@ -14,6 +14,8 @@ public class WeaponBase : MonoBehaviour
     public Camera playerCamera;
     public GameObject bulletPrefab;
     public Transform firePoint;
+    public QTE_MovingBox MovingBox;
+    public SkillCheck KeyInputs;
 
     // Bullet Attributes
     public float bulletVelocity, bulletSpread, fireRate;
@@ -31,7 +33,7 @@ public class WeaponBase : MonoBehaviour
     public AudioSource ReloadAudio;
 
     // UI
-    public TextMeshProUGUI QTEPopUp;
+    //public TextMeshProUGUI QTEPopUp;
 
     // States
     public enum ShootingMode
@@ -59,7 +61,7 @@ public class WeaponBase : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (currentMode == ShootingMode.Auto)
+        if (currentMode == ShootingMode.Auto && bulletsLeft > 0)
         {
             isShooting = Input.GetMouseButton(0);
         }
@@ -76,8 +78,7 @@ public class WeaponBase : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.R) && bulletsLeft < magazineSize && !isReloading)
         {
-            if (!SkillCheck.Instance.isActive)
-                SkillCheck.Instance.StartQTE(this);
+            QTESelect();
         }
 
         if (bulletsLeft < 1)
@@ -87,14 +88,40 @@ public class WeaponBase : MonoBehaviour
 
         if (bulletsLeft <= 0 && !isReloading && isShooting && !readyToShoot)
         {
-            if (!SkillCheck.Instance.isActive)
-                SkillCheck.Instance.StartQTE(this);
+            bulletsLeft = 0;
+            isShooting = false;
+            QTESelect();
         }
 
         if (AmmoManager.Instance.ammoCount != null)
         {
             AmmoManager.Instance.ammoCount.text = $"{bulletsLeft/bulletsPerBurst}/{magazineSize/bulletsPerBurst}";
         }
+    }
+
+    void QTESelect()
+    {
+        bulletsLeft = 0;
+        int Choice = Random.Range(0, 2);
+        switch (Choice)
+        {
+            case 0:
+                {
+                        if (!KeyInputs.isVisible && !MovingBox.QTEActive)
+                        KeyInputs.StartQTE(this);
+                        break;
+                }
+            case 1:
+                {
+                        if (!MovingBox.QTEActive && !KeyInputs.isVisible)
+                        StartCoroutine(MovingBox.DoQTE(this));
+                        break;
+                }
+            default:
+                {
+                        break;
+                }
+        };
     }
 
     public void Fire()
