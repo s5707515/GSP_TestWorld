@@ -42,7 +42,6 @@ public class EnemyMovement : MonoBehaviour
         {
             Patrol();
 
-          
         }
 
         if (enemyState == EnemyState.Attack)
@@ -124,15 +123,17 @@ public class EnemyMovement : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+        //Enemy range sphere
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, sightDistance);
 
+        //Vector to player line
         Gizmos.color = Color.blue;
         Gizmos.DrawLine(transform.position, playerRef.position);
 
-        Gizmos.color = Color.red;
 
-        //Vector3 towardsPlayerVector = (playerRef.transform.position - transform.position).normalized;
+        //Enemy fov gizmos
+        Gizmos.color = Color.red;
 
         Vector3 leftVector = Quaternion.AngleAxis(-fovRange, Vector3.up) * transform.forward;
 
@@ -145,6 +146,29 @@ public class EnemyMovement : MonoBehaviour
         Gizmos.DrawLine(transform.position, forwardPoint);
         Gizmos.DrawLine(transform.position, leftPoint);
         Gizmos.DrawLine(transform.position, rightPoint);
+
+        //Enemy path gizmos
+
+        for(int i = 0; i < patrolNodes.Length; i++)
+        {
+            //Circles for nodes
+            Gizmos.color = Color.magenta;
+
+            Gizmos.DrawSphere(patrolNodes[i].position, 0.3f);
+
+            //Draw lines to connect nodes
+            Gizmos.color = Color.cyan;
+
+            if (i != patrolNodes.Length - 1)
+            {
+                
+                Gizmos.DrawLine(patrolNodes[i].position, patrolNodes[i + 1].position);
+            }
+            else
+            {
+                Gizmos.DrawLine(patrolNodes[i].position, patrolNodes[0].position);
+            }
+        }
 
 
     }
