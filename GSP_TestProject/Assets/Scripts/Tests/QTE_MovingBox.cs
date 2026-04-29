@@ -7,6 +7,8 @@ using UnityEngine.UI;
 
 public class QTE_MovingBox : MonoBehaviour
 {
+    private WeaponBase currentWeapon;
+
     [SerializeField] private float moveSpeed = 2.0f;
 
     [SerializeField] private Slider slider;
@@ -15,28 +17,28 @@ public class QTE_MovingBox : MonoBehaviour
 
     private float time = 0;
 
-    bool QTEActive = false;
+    public bool QTEActive = false;
 
     bool goalFound = true;
 
     [SerializeField] float[] widths = { 400.0f, 300.0f, 250.0f, 200.0f };
 
     private int widthPointer = 0;
-   
 
     // Update is called once per frame
     void Update()
     {
-        if(!QTEActive)
-        {
-            if (Input.GetKeyDown(KeyCode.Q))
-            {
-                //Display the QTE
-                StartCoroutine(DoQTE());
-            }
-        }
-        else
-        {
+        //if(!QTEActive)
+        //{
+        //    if (Input.GetKeyDown(KeyCode.Q))
+        //    {
+        //        //Display the QTE
+        //        StartCoroutine(DoQTE());
+        //    }
+        //}
+        //else
+        //{
+        if (QTEActive)
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 if (ISOverlappingUI(goalRect, slider.handleRect))
@@ -50,7 +52,6 @@ public class QTE_MovingBox : MonoBehaviour
                     Debug.Log("YOU MISSED");
                 }
             }
-        }
 
     }
 
@@ -71,8 +72,9 @@ public class QTE_MovingBox : MonoBehaviour
         goalRect.anchoredPosition = new Vector2(xPos, goalRect.anchoredPosition.y);
     }
 
-    IEnumerator DoQTE()
+    public IEnumerator DoQTE(WeaponBase weapon)
     {
+        currentWeapon = weapon;
         QTEActive = true;
         slider.gameObject.SetActive(true);
 
@@ -94,6 +96,7 @@ public class QTE_MovingBox : MonoBehaviour
         //Hide QTE event
 
         QTEActive = false;
+        weapon.Reload();
         slider.gameObject.SetActive(false);
         
     }

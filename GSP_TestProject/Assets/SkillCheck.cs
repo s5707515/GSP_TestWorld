@@ -6,20 +6,28 @@ using UnityEngine;
 
 public class SkillCheck : MonoBehaviour
 {
-    public static SkillCheck Instance { get; set; }
+    // public static SkillCheck Instance { get; set; }
 
     private WeaponBase currentWeapon;
     public AudioClip[] ReloadSounds;
     public TextMeshProUGUI Sequence;
     private List<KeyCode> keySequence = new List<KeyCode>();
+    private KeyCode[] Exceptions =
+        {
+            KeyCode.W, KeyCode.A, KeyCode.S, KeyCode.D, KeyCode.R, KeyCode.Space
+        };
+    private KeyCode[] possibleKeys =
+        {
+            KeyCode.L, KeyCode.K, KeyCode.J, KeyCode.I
+        };
     public int currentKey = 0;
-    public bool isActive;
+    public bool isVisible;
 
     // Start is called before the first frame update
-    private void Awake()
-    {
-        Instance = this;
-    }
+    //private void Awake()
+    //{
+    //    Instance = this;
+    //}
 
     public void StartQTE(WeaponBase weapon)
     {
@@ -28,18 +36,23 @@ public class SkillCheck : MonoBehaviour
         DisplaySequence();
 
         currentKey = 0;
-        isActive = true;
-
+        isVisible = true;        
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (Sequence != null && isActive)
+        if (Sequence != null && isVisible)
         {
             if (Input.anyKeyDown)
             {
-                if (currentKey < keySequence.Count && Input.GetKeyDown(keySequence[currentKey]))
+                KeyCode pressedKey = GetPressedKey();
+
+                // Ignore keys that are not part of the QTE system
+                if (!possibleKeys.Contains(pressedKey))
+                    return;
+
+                if (pressedKey == keySequence[currentKey])
                 {
                     // Implement for reload sound per keycode
 
@@ -66,15 +79,20 @@ public class SkillCheck : MonoBehaviour
     {
         keySequence.Clear();
 
-        KeyCode[] possibleKeys = 
-        {
-            KeyCode.L, KeyCode.K, KeyCode.J, KeyCode.I
-        };
-
         for(int i = 0; i < possibleKeys.Length; i++)
         {
             keySequence.Add(possibleKeys[Random.Range(0, possibleKeys.Length)]);
         }
+    }
+
+    KeyCode GetPressedKey()
+    {
+        foreach (KeyCode key in System.Enum.GetValues(typeof(KeyCode)))
+        {
+            if (Input.GetKeyDown(key))
+                return key;
+        }
+        return KeyCode.None;
     }
 
     void DisplaySequence()
@@ -85,7 +103,7 @@ public class SkillCheck : MonoBehaviour
 
     void CompletedQTE()
     {
-        isActive = false;
+        isVisible = false;
         Sequence.gameObject.SetActive(false);
 
         Debug.Log("QTE Success");
@@ -94,7 +112,7 @@ public class SkillCheck : MonoBehaviour
 
     void FailedQTE()
     {
-        isActive = false;
+        isVisible = false;
         Sequence.gameObject.SetActive(false);
 
         Debug.Log("QTE Failed");
