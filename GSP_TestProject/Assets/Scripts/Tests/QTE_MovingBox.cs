@@ -102,8 +102,7 @@ public class QTE_MovingBox : MonoBehaviour
     }
     IEnumerator LerpSlider()
     {
-       
-
+   
         while (!goalFound)
         {
             time += Time.deltaTime * moveSpeed;
